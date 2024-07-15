@@ -1,0 +1,187 @@
+workspace {
+
+    model {
+        u = person "Cliente"
+        
+        # aplicacion tercera para evidenciar cambio
+        ss = softwareSystem "Software de Emisión Documentos Electronicos" {
+            wa = container "Aplicación de Escritorio" "Sistema Tercero" "JAVA SE"{
+                tags "Web Browser"
+                c1 = component "Pantalla de Ventas" "Pantalla donde se realiza la factura electronica y se solicita el codigo al cliente para confirmar la devolución de impuesto" "JAVA SE"  
+                c2 = component "Emisión Comprobante SRI" "Macro proceso de facturación electronica" "SOAP"
+                c3 = component "Registro Devolución Impuestos" "Servicio para registrar devolución de impuestos (Personalización App)" "RES API"
+                c4 = component "Consulta de Documentos" "Consulta de documentos autorizados, con referencia de devolucion de impuestos" "JAVA SE"
+            }
+            db = container "Base de Datos Cliente" "" "Mysql Remote"{
+                tags "Database"
+            }
+        }
+        
+        # programa que emite documento controlado y registra solicitud
+        sq = softwareSystem "Software API REST Recepta Solicitudes de Devolución Impuestos"{
+            wb = container "API" "Servidor de aplicaciones" "PHP"{
+                b1 = component "GET Solicitudes a procesar" "Consulta de documentos pendientes de procesar" "PHP"
+                b2 = component "GET Documento" "Consulta de documento de forma individual para ver el estado del procesamiento" "PHP"
+                b3 = component "POST Registrar solicitud" "Servicio expuesto para aplicaciones terceras para registrar solicitud de procesamiento" "PHP"
+                b4 = component "POST Actualiza solicitud" "Servicio expuesto para actualizar estado del documento en base al procesamiento del documento."
+            }
+            d1 = container "Base de Datos Solución" "" "Mysql Remote"{
+                tags "Database"
+            }
+        }
+        
+        # procesa las solicitudes y se comunica con el SRI
+        sc = softwareSystem "Software Orquestación Solicitudes de Devolución Impuestos"{
+            wc = container "CRON" "Demonio publicado para la escucha activa de solicitudes de procesamiento" "java EE"{
+                a1 = component "Orquestación de consumo" "Proceso administrativo que secuencialmente invoca servicios para procesarlos ante el SRI y registrar su procesamiento" "JAVA SE"
+                a2 = component "GET Documentos pendientes" "Consumo de servicio expuesto para procesar documentos" "JAVA SE"
+                a3 = component "GET Solicitud Token MD5"  "Consumo de servicio del SRI para obtenter token" "JAVA SE"
+                a4 = component "POST Registrar solicitud SRI" "Consumo del servicio del SRI para registrar solicitud de devolución de impuestos" "JAVA SE"
+                a5 = component "POST Actualiza estado Documento" "Consumo de servicio expuesto para acutalizar estado de comprobante"
+            }
+        }
+        
+        sr = softwareSystem "SRI"{
+            wx = container "API"{
+                x1 = component "GET Token MD5" "Token MD5 para verificación de autentificación de contribuyente" "SRI"
+                x2 = component "POST Autorización Solicitud Devolución Impuesto" "Servicio individual para procesar documento a solicitar devolución de impuestos" "SRI"
+            }
+        }
+
+        # Relacion a primer nivel
+        u -> ss "Usa"
+        ss -> sq "Consume"
+        sq -> ss "Notifica registro"
+  
+        # Relacion a segundo nivel
+        wa -> db "Registra"
+        wa -> sq "Solicita"
+        wc -> wb "Escucha
+        
+        a1 -> b1 "Recupera"
+        
+        # Relacion a tercer nivel
+        c1 -> c2 "Emite y solicita autorización documento"
+        c1 -> c3 "Metodo Solicitud devolución de Impuestos"
+        c3 -> b3 "Envia solicitud de devolución de impuestos"
+        c4 -> b2 "Consulta estado"
+        
+        # Relacion a tercer nivel 2 diagrama
+        c3 -> c1 "Recepta solicitud"
+        wb -> d1 "Registra"
+        
+        #Relacion a tercer nivel de 2 diagrama
+        b1 -> d1 "Consulta"
+        b2 -> d1 "Consulta"
+        b3 -> d1 "Registra"
+        b4 -> d1 "Modifica Estado"
+        
+        #Relacion a tecer nivel del 3 diagrama
+        a1 -> a2 "CRON"
+        a2 -> a3 "Recupera"
+        a3 -> a4 "Consume"
+
+        wc -> wx "Consume"
+        a3 -> x1 "Consume"
+        a4 -> x2 "Consume"
+        x2 -> a4 "Recibe Respuesta"
+        
+        a5 -> b4 "Actualiza"
+        a4 -> a5 "Consume"
+    }
+
+    views {
+    
+        #Nivel 1
+        systemContext ss "1_DiagramaGeneral" {
+            include *
+            include sc
+            autolayout lr
+        }
+
+        #Nivel 2
+        container ss "21_DiagramaEmisionDocumentoElectronico" {
+            include *
+            
+            autolayout lr
+        }
+
+        #Nivel 2
+        container sq "22_DiagramaServidorAplicacionesPHP" {
+            include *
+            autolayout lr
+        }
+        
+        #Nivel 2
+        container sc "23_DiagramaOrquestacionSolicitudesJAVA" {
+            include *
+            autolayout lr
+        }
+        
+        #Nivel 3
+          component wa "31_DiagramaCliente" {
+            include *
+            autoLayout lr
+        }
+        
+        #Nivel 3
+        component wb "32_DiagramaServidorAplicacionesPHP" {
+            include *
+            autoLayout lr
+        }
+        
+        #Nivel 3
+        component wc "33_DiagramaCron" {
+            include *
+            autoLayout lr
+        }
+        
+        #Nivel 3
+        component wx "34_DiagramaServiciosSRI" {
+            include *
+            autoLayout lr
+        }
+        
+        #Hojas de Estilo
+             styles {
+            element "Person" {
+                color #ffffff
+                fontSize 22
+                shape Person
+            }
+            element "Customer" {
+                background #08427b
+            }
+            element "Software System" {
+                background #1168bd
+                color #ffffff
+            }
+            element "Existing System" {
+                background #999999
+                color #ffffff
+            }
+            element "Container" {
+                background #438dd5
+                color #ffffff
+            }
+            element "Web Browser" {
+                shape WebBrowser
+            }
+            element "Mobile App" {
+                shape MobileDeviceLandscape
+            }
+            element "Database" {
+                shape Cylinder
+            }
+            element "Component" {
+                background #85bbf0
+                color #000000
+            }
+            element "Failover" {
+                opacity 25
+            }
+        }
+
+    }
+    
+}
