@@ -4,8 +4,8 @@ package com.d3v.proceso;
 public class ConfiguracionURL {
     
     //Credenciales SRI
-    public static final String SRI_USUARIO = "0104527361001";
-    public static final String SRI_CREDENCIAL = "Dianasri2020.";
+    public static final String SRI_USUARIO = "99999999999999";
+    public static final String SRI_CREDENCIAL = "xxxxxxxxxxxxx.";
 
     //Desarrollo
     public static final String URL_CONSULTA_DOCUMENTOS_PENDIENTES = "https://d3veloperstudio.com/impuestos/consultaSolicitudEstado.php";
